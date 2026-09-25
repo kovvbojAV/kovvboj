@@ -512,7 +512,7 @@ mod egui_impl {
             } else {
                 button.on_hover_text(
                     "Transcode this clip to HAP beside the original, then play that. \
-                     Needs ffmpeg and ffprobe on PATH.",
+                     Uses the bundled ffmpeg, or one on PATH.",
                 )
             };
             if button.clicked()

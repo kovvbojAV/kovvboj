@@ -27,19 +27,19 @@ laser = ["dep:rustjay-laser"]
 laser-dac = ["laser", "rustjay-laser/dac"]
 
 [dependencies]
-rustjay-engine = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", default-features = false }
-rustjay-gui    = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", optional = true }
+rustjay-engine = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd", default-features = false }
+rustjay-gui    = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd", optional = true }
 uuid           = { version = "1", features = ["v4"] }
-rustjay-mixer  = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", optional = true }
-rustjay-isf    = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
+rustjay-mixer  = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd", optional = true }
+rustjay-isf    = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd" }
 isf            = { git = "https://github.com/BlueJayLouche/isf.git" }
-rustjay-core   = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
-rustjay-render = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
-rustjay-io     = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", default-features = false }
-rustjay-api    = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", optional = true }
-rustjay-projection = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", optional = true }
-rustjay-lighting   = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
-rustjay-ledmap     = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
+rustjay-core   = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd" }
+rustjay-render = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd" }
+rustjay-io     = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd", default-features = false }
+rustjay-api    = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd", optional = true }
+rustjay-projection = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd", optional = true }
+rustjay-lighting   = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd" }
+rustjay-ledmap     = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd" }
 wgpu           = { version = "30.0", features = ["spirv", "gles"] }
 bytemuck       = { version = "1.21", features = ["derive"] }
 anyhow         = "1.0"
@@ -50,7 +50,7 @@ env_logger     = "0.11"
 image          = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 ab_glyph       = "0.2"
 notify         = "8.0"
-rustjay-laser  = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", optional = true }
+rustjay-laser  = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd", optional = true }
 dirs           = "6.0"
 rfd            = "0.15"
 egui           = { version = "0.36", optional = true }
@@ -70,9 +70,9 @@ syphon-core = "0.4.0"
 # The engine's vendored forks. Cargo ignores a dependency's own [patch], so the
 # engine's workspace patches are re-applied here, from the same engine rev.
 [patch.crates-io]
-wgpu-hal              = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
-nokhwa-bindings-macos = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
-imgui-wgpu            = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
+wgpu-hal              = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd" }
+nokhwa-bindings-macos = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd" }
+imgui-wgpu            = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "b7c5bd1f4e19428fc8ddbbd63fe13a6f4a3d8bbd" }
 
 # Working on the engine alongside? Point every engine crate at a local checkout
 # (keep the rev above in sync when you land the engine change):

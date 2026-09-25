@@ -130,6 +130,11 @@ jobs:
           APP="dist/$DISPLAY_NAME.app"
           mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" out
           cp "$TD/release/kovvboj" "$APP/Contents/MacOS/"
+          # The ffmpeg/ffprobe programs, for recording and → HAP conversion:
+          # rustjay_io::ffmpeg_tool runs the copies beside the binary.
+          # dylibbundler below pulls their dylibs into the bundle too.
+          cp "$(brew --prefix)/bin/ffmpeg" "$(brew --prefix)/bin/ffprobe" "$APP/Contents/MacOS/"
+          chmod u+w "$APP/Contents/MacOS/ffmpeg" "$APP/Contents/MacOS/ffprobe"
           cp packaging/AppIcon.icns "$APP/Contents/Resources/"
           # Bundled shader/asset libraries: the app resolves them from
           # Contents/Resources at runtime (`resources_dir()`).
@@ -149,6 +154,7 @@ jobs:
           cp "$NDI_SDK_DIR/lib/macOS/libndi.dylib" "$APP/Contents/Frameworks/"
           # Pull the brew FFmpeg dylib closure into the bundle and rewrite load paths.
           dylibbundler -cd -od -b -x "$BIN" \
+            -x "$APP/Contents/MacOS/ffmpeg" -x "$APP/Contents/MacOS/ffprobe" \
             -d "$APP/Contents/libs/" -p @executable_path/../libs/
           # Normalize rpaths: dylibbundler rewrites every existing rpath to its
           # -p value (leaving duplicates that macOS 26+ dyld refuses to load),
@@ -187,6 +193,8 @@ jobs:
           # Bundled shader/asset libraries, resolved next to the binary at runtime.
           Copy-Item -Recurse shaders, assets $dist
           Copy-Item "$env:FFMPEG_DIR\bin\*.dll" $dist
+          # The ffmpeg/ffprobe programs, for recording and → HAP conversion.
+          Copy-Item "$env:FFMPEG_DIR\bin\ffmpeg.exe", "$env:FFMPEG_DIR\bin\ffprobe.exe" $dist
           Copy-Item "$env:NDI_SDK_DIR\Bin\x64\Processing.NDI.Lib.x64.dll" $dist
           Compress-Archive -Path "$dist\*" -DestinationPath "out\$app-windows-x86_64.zip"
           .github\scripts\make-msi.ps1 -Name $display -Version $env:VERSION `
@@ -219,7 +227,8 @@ jobs:
           body: |
             Built with all features (NDI, Ableton Link, Pro DJ Link, HAP, REST API, …).
             The NDI runtime is bundled. NDI® is a registered trademark of Vizrt NDI AB.
-            Linux builds link the distro's FFmpeg (`libavcodec`/`libavformat`/`libswscale`) — install via your package manager.
+            macOS and Windows packages include FFmpeg, recording tools and all.
+            Linux builds use the distro's FFmpeg: install the `ffmpeg` package (it brings the libraries and the recording tools).
 
             **macOS**: the app is ad-hoc signed, not notarized. On first launch macOS will block it:
             right-click → Open, or approve under System Settings → Privacy & Security, or
