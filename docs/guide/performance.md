@@ -36,7 +36,8 @@ codec:
 
 - **Convert clips to HAP.** Select a clip layer's source and press **→ HAP**.
   KOVVBOJ transcodes the clip to HAP next to the original, then plays the
-  HAP. This needs `ffmpeg` and `ffprobe` on your `PATH`.
+  HAP. It uses the FFmpeg bundled with the macOS and Windows packages. On
+  Linux, install your distro's `ffmpeg` package.
 - **Convert at the size you need.** A 4K HAP clip still moves four times the
   data of a 1080p one. Unless the output really is 4K, make 1080p clips.
 

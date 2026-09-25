@@ -111,11 +111,8 @@ Set the codec and folder in **Edit → Settings → Recording**:
 
 The settings apply to every set, starting with the next recording.
 
-> **Recording needs the `ffmpeg` command.** KOVVBOJ hands frames to the
-> `ffmpeg` program, which the release packages don't include. Install it first,
-> with `brew install ffmpeg` on macOS or your package manager on Linux. On
-> Windows, download it from [ffmpeg.org](https://ffmpeg.org/download.html) and
-> put it on your `PATH`.
+> **FFmpeg.** Recording runs the `ffmpeg` program. The macOS and Windows
+> packages include it. On Linux, install your distro's `ffmpeg` package.
 
 ## Deck windows
 

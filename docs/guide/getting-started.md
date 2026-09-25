@@ -9,7 +9,7 @@ Download the build for your system from
 |---|---|---|
 | macOS (Apple silicon) | `kovvboj-macos-arm64.dmg` | Drag KOVVBOJ into Applications. The app is ad-hoc signed, not notarized, so the first time you open it, right-click it and choose **Open**. |
 | Windows | `kovvboj-windows-x86_64.msi` | Installs KOVVBOJ and adds a Start-menu shortcut. The `.zip` has the same files if you'd rather not install. |
-| Linux (x86-64) | `kovvboj-linux-x86_64.tar.gz` | Unpack it anywhere and run `./kovvboj`. Install your distro's FFmpeg libraries first (`libavcodec`, `libavformat`, `libswscale`). |
+| Linux (x86-64) | `kovvboj-linux-x86_64.tar.gz` | Unpack it anywhere and run `./kovvboj`. Install your distro's `ffmpeg` package first. It provides the libraries KOVVBOJ needs and the tools it records with. |
 
 NDI is bundled in all three. To build from source instead, see
 [CONTRIBUTING](../../CONTRIBUTING.md#building-from-source).
