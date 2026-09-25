@@ -11,6 +11,7 @@
 
 use crate::splash::{LAUNCH_HOLD, Presentation, backdrop_opacity, launch_opacity, splash};
 #[cfg(feature = "webcam")]
+#[cfg(feature = "webcam")]
 use crate::ui::LedMapTab;
 use crate::ui::{DeckTab, EffectsTab, MixerTab, OutputsTab, SequencerTab, StageTab};
 use rustjay_engine::prelude::{AnyEguiShell, AnyEguiTab, EguiControlGui, EngineState, GuiTab};
@@ -71,6 +72,7 @@ pub struct KovvbojShell {
     deck_name: [String; 2],
     master: MixerTab,
     stage: StageTab,
+    #[cfg(feature = "webcam")]
     #[cfg(feature = "webcam")]
     ledmap: LedMapTab,
     outputs: OutputsTab,
@@ -192,6 +194,7 @@ impl KovvbojShell {
             deck_name: [String::new(), String::new()],
             master: MixerTab::default(),
             stage: StageTab::new(),
+            #[cfg(feature = "webcam")]
             #[cfg(feature = "webcam")]
             ledmap: LedMapTab::new(),
             outputs: OutputsTab::new(),
