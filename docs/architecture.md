@@ -14,11 +14,13 @@ cargo run --all-features        # NDI, Syphon, ProDJ, HAP, ffmpeg, recording…
 ## What it is
 
 A **layer** is one visual: a source, its FX chain, an opacity and a blend mode
-against the layers beneath it. The top of the stack composites over the
-bottom, and that is the whole structure — there is no channel level above the
-layers and no crossfader. In its place a pinned MASTER row carries a
-**dimmer** (a real engine parameter, so MIDI, OSC and LFOs reach it) and the
-master FX chain that every layer passes through on its way out.
+against the layers beneath it. Layers stack inside **two permanent decks, A and
+B** — each deck is a `ChannelGroup` with fixed uuids (`deck_a`/`deck_b`), so
+deck bindings survive every scene load — and groups of layers can nest inside
+a deck. The decks meet at a **crossfader** through an ISF transition, with
+**TAKE** (⌘T) running the fade automatically. After that, a pinned MASTER row
+carries a **dimmer** (a real engine parameter, so MIDI, OSC and LFOs reach it)
+and the master FX chain everything passes through on its way out.
 
 You bring `.fs` ISF shaders and video sources; kovvboj handles the routing,
 compositing, modulation, and output. The control window is a three-column egui
