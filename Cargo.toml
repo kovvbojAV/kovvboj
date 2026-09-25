@@ -2,6 +2,9 @@
 name = "kovvboj"
 version = "0.1.0"
 edition = "2024"
+description = "Cross-platform VJ app built on rustjay-engine"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/kovvbojAV/kovvboj"
 
 [features]
 default = ["mixer", "egui", "webcam", "led"]
@@ -24,34 +27,34 @@ laser = ["dep:rustjay-laser"]
 laser-dac = ["laser", "rustjay-laser/dac"]
 
 [dependencies]
-rustjay-engine = { workspace = true }
-rustjay-gui    = { workspace = true, optional = true }
-uuid           = { workspace = true }
-rustjay-mixer  = { workspace = true, optional = true }
-rustjay-isf    = { workspace = true }
-isf            = { workspace = true }
-rustjay-core   = { workspace = true }
-rustjay-render = { workspace = true }
-rustjay-io     = { workspace = true }
-rustjay-api    = { workspace = true, optional = true }
-rustjay-projection = { workspace = true, optional = true }
-rustjay-lighting   = { workspace = true }
-rustjay-ledmap     = { workspace = true }
-wgpu           = { workspace = true }
-bytemuck       = { workspace = true }
-anyhow         = { workspace = true }
-serde          = { workspace = true }
-serde_json     = { workspace = true }
-log            = { workspace = true }
+rustjay-engine = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", default-features = false }
+rustjay-gui    = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", optional = true }
+uuid           = { version = "1", features = ["v4"] }
+rustjay-mixer  = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", optional = true }
+rustjay-isf    = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
+isf            = { git = "https://github.com/BlueJayLouche/isf.git" }
+rustjay-core   = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
+rustjay-render = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
+rustjay-io     = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", default-features = false }
+rustjay-api    = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", optional = true }
+rustjay-projection = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", optional = true }
+rustjay-lighting   = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
+rustjay-ledmap     = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
+wgpu           = { version = "30.0", features = ["spirv", "gles"] }
+bytemuck       = { version = "1.21", features = ["derive"] }
+anyhow         = "1.0"
+serde          = { version = "1.0", features = ["derive"] }
+serde_json     = "1.0"
+log            = "0.4"
 env_logger     = "0.11"
-image          = { workspace = true }
+image          = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 ab_glyph       = "0.2"
 notify         = "8.0"
-rustjay-laser  = { path = "../rustjay-laser", optional = true }
-dirs           = { workspace = true }
+rustjay-laser  = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a", optional = true }
+dirs           = "6.0"
 rfd            = "0.15"
-egui           = { workspace = true, optional = true }
-winit          = { workspace = true }
+egui           = { version = "0.36", optional = true }
+winit          = "0.30"
 hap-wgpu       = { version = "0.3.0", optional = true }
 sysinfo        = { version = "0.34", optional = true, default-features = false, features = ["system"] }
 
@@ -62,4 +65,40 @@ egui_kittest = { version = "=0.36.1", features = ["snapshot", "wgpu"] }
 # Not used in code: a direct dependency is what makes syphon-core's
 # `links = "Syphon"` metadata (DEP_SYPHON_FRAMEWORK_DIR) visible to build.rs,
 # which needs it to emit the runtime rpath for the bundled Syphon.framework.
-syphon-core = { workspace = true }
+syphon-core = "0.4.0"
+
+# The engine's vendored forks. Cargo ignores a dependency's own [patch], so the
+# engine's workspace patches are re-applied here, from the same engine rev.
+[patch.crates-io]
+wgpu-hal              = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
+nokhwa-bindings-macos = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
+imgui-wgpu            = { git = "https://github.com/BlueJayLouche/rustjay-engine", rev = "1f0d4cfe8a3eacecd6dd153a7847d6bbfffcec9a" }
+
+# Working on the engine alongside? Point every engine crate at a local checkout
+# (keep the rev above in sync when you land the engine change):
+# [patch."https://github.com/BlueJayLouche/rustjay-engine"]
+# rustjay-engine     = { path = "../rustjay-engine/crates/rustjay-engine" }
+# rustjay-core       = { path = "../rustjay-engine/crates/rustjay-core" }
+# rustjay-render     = { path = "../rustjay-engine/crates/rustjay-render" }
+# rustjay-io         = { path = "../rustjay-engine/crates/rustjay-io" }
+# rustjay-gui        = { path = "../rustjay-engine/crates/rustjay-gui" }
+# rustjay-mixer      = { path = "../rustjay-engine/crates/rustjay-mixer" }
+# rustjay-isf        = { path = "../rustjay-engine/crates/rustjay-isf" }
+# rustjay-api        = { path = "../rustjay-engine/crates/rustjay-api" }
+# rustjay-projection = { path = "../rustjay-engine/crates/rustjay-projection" }
+# rustjay-lighting   = { path = "../rustjay-engine/crates/rustjay-lighting" }
+# rustjay-ledmap     = { path = "../rustjay-engine/crates/rustjay-ledmap" }
+# rustjay-laser      = { path = "../rustjay-engine/crates/rustjay-laser" }
+
+[profile.release]
+opt-level     = 3
+lto           = "fat"
+codegen-units = 1
+panic         = "unwind"
+
+[profile.dev]
+opt-level = 1
+
+[profile.profiling]
+inherits = "release"
+debug = 1
