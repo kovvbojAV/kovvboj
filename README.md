@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/kovvbojAV/kovvboj/releases">Download</a> ·
+  <a href="docs/guide/README.md">Guide</a> ·
   <a href="#getting-started">Getting started</a> ·
   <a href="docs/architecture.md">Architecture</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
@@ -16,6 +17,8 @@
 KOVVBOJ is an open-source VJ app for macOS, Windows, and Linux. Stack layers of
 video, cameras, shaders, and text. Put effects on each layer and on the master
 output, then send the result to projectors, LED strips, and lasers.
+
+![KOVVBOJ in MIX mode: the library on the left, decks A and B with the crossfader and master in the centre, the preview and inspector on the right.](docs/guide/img/overview.png)
 
 ## Features
 
@@ -56,10 +59,14 @@ Use `--all-features` to add NDI, HAP, FFmpeg, Pro DJ Link, the web API,
 recording, and laser output. See [Cargo features](CONTRIBUTING.md#cargo-features).
 
 On macOS the downloaded app is ad-hoc signed, not notarized. The first time,
-right-click it and choose **Open**.
+right-click it and choose **Open**. The [guide](docs/guide/getting-started.md)
+walks you through building your first set.
 
 ## Documentation
 
+- [Guide](docs/guide/README.md): performing with KOVVBOJ. Covers getting
+  started, decks and layers, effects, modulation, outputs, lighting, lasers,
+  control, shortcuts, and performance.
 - [Architecture](docs/architecture.md): how layers, the library, FX chains,
   workspaces, and outputs fit together, and where each one lives in the code.
 - [Shader credits](shaders/CREDITS.md): who wrote the bundled shaders, and under
