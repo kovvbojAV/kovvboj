@@ -4,7 +4,9 @@
 # Shaders dropped into shaders/ stay local unless deliberately added
 # (git add -f), so third-party shaders aren't redistributed by accident.
 shaders/*.fs
-# Runtime state the app writes into the working directory.
+# Runtime state the app writes into the working directory; .kovvboj/ is the
+# default workspace (your scene, stage, groups, recordings).
+/.kovvboj/
 /keymap.json
 /scene.json
 /stage.json
