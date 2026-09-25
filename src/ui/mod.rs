@@ -20,9 +20,11 @@ pub const MASTER_DIM: &str = "master_dim";
 // wants one, and it carries its own `webcam` gate.
 #[cfg(feature = "laser")]
 pub mod laser_tab;
+#[cfg(feature = "webcam")]
 pub mod ledmap_tab;
 #[cfg(feature = "laser")]
 pub use laser_tab::LaserTab;
+#[cfg(feature = "webcam")]
 pub use ledmap_tab::LedMapTab;
 
 /// Mixer tab — crossfader, per-channel opacity, master FX.
