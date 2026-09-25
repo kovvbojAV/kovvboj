@@ -66,9 +66,8 @@ fn local_syphon_framework() -> Option<std::path::PathBuf> {
     }
 
     // 3. syphon-rs checkout next to this repo
-    //    (crate dirs are two levels below the repo root)
     let manifest = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let candidate = manifest.ancestors().nth(3)?.join("syphon-rs/syphon-lib");
+    let candidate = manifest.parent()?.join("syphon-rs/syphon-lib");
     if candidate.join("Syphon.framework").exists() {
         return Some(candidate);
     }

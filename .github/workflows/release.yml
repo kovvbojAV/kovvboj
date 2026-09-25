@@ -1,0 +1,230 @@
+name: Release
+
+# Builds + packages KOVVBOJ and attaches it to a GitHub release.
+#   macOS   -> .app bundle in a .dmg (ad-hoc signed)
+#   Windows -> portable .zip + .msi installer (WiX, Start-menu shortcut)
+#   Linux   -> .tar.gz
+#
+# Trigger: push a tag like `v0.2.0`, or run manually (workflow_dispatch).
+# The package version comes from Cargo.toml.
+#
+# Icons: packaging/AppIcon.icns (macOS bundle), packaging/icon.ico (Windows
+# shortcut); regenerate with `uv run .github/packaging/app_icon.py`.
+#
+# Built with --all-features (NDI, Ableton Link, Pro DJ Link, HAP, REST API,
+# ffmpeg, projection, lasers…); the NDI runtime ships inside the packages.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Existing v* tag to attach the packages to (empty = artifacts-only dry run)"
+        default: ""
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      # Linking needs no help — syphon-core reassembles its bundled universal
+      # framework in OUT_DIR and the build scripts find it there. This clone is
+      # for *packaging*: the bundling step below copies a framework into the
+      # .app, and OUT_DIR is a build-cache path we'd have to go hunting for.
+      # SYPHON_FRAMEWORK_DIR also pins the build to this same copy.
+      - name: Get Syphon.framework (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          git clone --depth 1 https://github.com/BlueJayLouche/syphon-rs "$RUNNER_TEMP/syphon-rs"
+          echo "SYPHON_FRAMEWORK_DIR=$RUNNER_TEMP/syphon-rs/syphon-lib" >> "$GITHUB_ENV"
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libudev-dev pkg-config clang ninja-build \
+            libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
+          # $ORIGIN rpath so bundled shared libs (libndi) load from next to the binary
+          echo 'RUSTFLAGS=-C link-arg=-Wl,-rpath,$ORIGIN' >> "$GITHUB_ENV"
+
+      # NDI SDK: proprietary, fetched from NDI's public download URLs; the
+      # runtime library is redistributed inside the packages (attribution in
+      # the release notes, per the NDI SDK license).
+      - name: Install NDI SDK (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          curl -L -o "$RUNNER_TEMP/ndi.pkg" "https://downloads.ndi.tv/SDK/NDI_SDK_Mac/Install_NDI_SDK_v6_Apple.pkg"
+          sudo installer -pkg "$RUNNER_TEMP/ndi.pkg" -target /
+          echo "NDI_SDK_DIR=/Library/NDI SDK for Apple" >> "$GITHUB_ENV"
+
+      - name: Install NDI SDK (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          curl -L -o "$RUNNER_TEMP/ndi.tar.gz" "https://downloads.ndi.tv/SDK/NDI_SDK_Linux/Install_NDI_SDK_v6_Linux.tar.gz"
+          tar -xzf "$RUNNER_TEMP/ndi.tar.gz" -C "$RUNNER_TEMP"
+          cd "$RUNNER_TEMP"
+          yes | PAGER=cat sh Install_NDI_SDK_v6_Linux.sh > /dev/null
+          echo "NDI_SDK_DIR=$RUNNER_TEMP/NDI SDK for Linux" >> "$GITHUB_ENV"
+
+      - name: Install NDI SDK (Windows)
+        if: runner.os == 'Windows'
+        timeout-minutes: 10
+        shell: pwsh
+        run: |
+          curl.exe -L -o "$env:RUNNER_TEMP\ndi_sdk.exe" "https://downloads.ndi.tv/SDK/NDI_SDK/NDI%206%20SDK.exe"
+          # The installer is Inno Setup and pops a dialog even in silent mode
+          # (hung earlier runs) — don't run it, unpack its payload instead.
+          choco install innoextract -y --no-progress | Out-Null
+          innoextract "$env:RUNNER_TEMP\ndi_sdk.exe" -d "$env:RUNNER_TEMP\ndi-sdk" | Out-Null
+          $inc = Get-ChildItem "$env:RUNNER_TEMP\ndi-sdk" -Recurse -Directory -Filter Include | Select-Object -First 1
+          if (-not $inc) { throw "NDI SDK: innoextract found no Include dir" }
+          "NDI_SDK_DIR=$($inc.Parent.FullName)" >> $env:GITHUB_ENV
+
+      - name: Install FFmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg dylibbundler
+
+      - name: Install FFmpeg SDK (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Pinned to the immutable 8.0 SDK: it matches the FFMPEG_DIR SDK and
+          # runtime DLLs on the venue rigs. BtbN's "n8.1-latest" is a moving
+          # target that crossed the 8.1.2 struct rework.
+          curl.exe -L -o ffmpeg.zip "https://github.com/GyanD/codexffmpeg/releases/download/8.0/ffmpeg-8.0-full_build-shared.zip"
+          Expand-Archive ffmpeg.zip -DestinationPath "$env:RUNNER_TEMP\ffmpeg"
+          $dir = Get-ChildItem "$env:RUNNER_TEMP\ffmpeg" -Directory | Select-Object -First 1
+          "FFMPEG_DIR=$($dir.FullName)" >> $env:GITHUB_ENV
+
+      - name: Build identity from Cargo and Git
+        shell: bash
+        run: |
+          package_id="$(cargo pkgid)"
+          echo "VERSION=${package_id##*#}" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: cargo build --release --locked --all-features
+
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          DISPLAY_NAME="KOVVBOJ"
+          TD="target"
+          APP="dist/$DISPLAY_NAME.app"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" out
+          cp "$TD/release/kovvboj" "$APP/Contents/MacOS/"
+          cp packaging/AppIcon.icns "$APP/Contents/Resources/"
+          # Bundled shader/asset libraries: the app resolves them from
+          # Contents/Resources at runtime (`resources_dir()`).
+          cp -R shaders assets "$APP/Contents/Resources/"
+          sed -e "s/__NAME__/$DISPLAY_NAME/g" \
+              -e "s/__BIN__/kovvboj/g" \
+              -e "s/__VERSION__/$VERSION/g" \
+              .github/packaging/Info.plist.tmpl > "$APP/Contents/Info.plist"
+          BIN="$APP/Contents/MacOS/kovvboj"
+          # Bundle Syphon.framework for binaries that link it (loaded via @rpath).
+          if otool -L "$BIN" | grep -q Syphon.framework; then
+            mkdir -p "$APP/Contents/Frameworks"
+            cp -R "$SYPHON_FRAMEWORK_DIR/Syphon.framework" "$APP/Contents/Frameworks/"
+          fi
+          # Bundle the NDI runtime (install name @rpath/libndi.dylib).
+          mkdir -p "$APP/Contents/Frameworks"
+          cp "$NDI_SDK_DIR/lib/macOS/libndi.dylib" "$APP/Contents/Frameworks/"
+          # Pull the brew FFmpeg dylib closure into the bundle and rewrite load paths.
+          dylibbundler -cd -od -b -x "$BIN" \
+            -d "$APP/Contents/libs/" -p @executable_path/../libs/
+          # Normalize rpaths: dylibbundler rewrites every existing rpath to its
+          # -p value (leaving duplicates that macOS 26+ dyld refuses to load),
+          # and shipped apps shouldn't carry build-machine paths anyway.
+          # Strip everything, then add the one rpath the bundle needs.
+          otool -l "$BIN" | awk '/LC_RPATH/{getline; getline; print $2}' | while read -r rp; do
+            install_name_tool -delete_rpath "$rp" "$BIN" 2>/dev/null || true
+          done
+          install_name_tool -add_rpath @executable_path/../Frameworks "$BIN"
+          codesign --force --deep -s - "$APP"
+          hdiutil create -volname "$DISPLAY_NAME" -srcfolder "$APP" -ov -format UDZO \
+            "out/kovvboj-macos-arm64.dmg"
+
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          TD="target"
+          mkdir -p out stage
+          cp "$TD/release/kovvboj" stage/
+          # Bundled shader/asset libraries, resolved next to the binary at runtime.
+          cp -R shaders assets stage/
+          # Ship the NDI runtime next to the binary ($ORIGIN rpath).
+          cp -P "$NDI_SDK_DIR"/lib/x86_64-linux-gnu/libndi.so* stage/
+          tar -C stage -czf "out/kovvboj-linux-x86_64.tar.gz" .
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $app = 'kovvboj'
+          $display = 'KOVVBOJ'
+          $td = 'target'
+          $dist = "dist\$app"
+          New-Item -ItemType Directory -Force $dist, out | Out-Null
+          Copy-Item "$td\release\$app.exe" $dist
+          # Bundled shader/asset libraries, resolved next to the binary at runtime.
+          Copy-Item -Recurse shaders, assets $dist
+          Copy-Item "$env:FFMPEG_DIR\bin\*.dll" $dist
+          Copy-Item "$env:NDI_SDK_DIR\Bin\x64\Processing.NDI.Lib.x64.dll" $dist
+          Compress-Archive -Path "$dist\*" -DestinationPath "out\$app-windows-x86_64.zip"
+          .github\scripts\make-msi.ps1 -Name $display -Version $env:VERSION `
+            -SourceDir $dist -Exe "$app.exe" `
+            -Icon "packaging\icon.ico" `
+            -Out "out\$app-windows-x86_64.msi"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: kovvboj-${{ matrix.os }}
+          path: out/*
+
+  release:
+    name: Create Release
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release_tag || github.ref_name }}
+          generate_release_notes: true
+          body: |
+            Built with all features (NDI, Ableton Link, Pro DJ Link, HAP, REST API, …).
+            The NDI runtime is bundled. NDI® is a registered trademark of Vizrt NDI AB.
+            Linux builds link the distro's FFmpeg (`libavcodec`/`libavformat`/`libswscale`) — install via your package manager.
+
+            **macOS**: the app is ad-hoc signed, not notarized. On first launch macOS will block it:
+            right-click → Open, or approve under System Settings → Privacy & Security, or
+            `xattr -dr com.apple.quarantine "/Applications/KOVVBOJ.app"`.
+
+            Earlier releases (up to 0.1.0) were published from
+            [rustjay-engine](https://github.com/BlueJayLouche/rustjay-engine/releases/tag/kovvboj-v0.1.0).
+          files: artifacts/**/*

@@ -1,6 +1,6 @@
 # Kovvboj Port Parity Tracker
 
-Source of truth: [`VARDA_PORT.md`](../../VARDA_PORT.md) and the [Varda README](../../varda/README.md).
+Source of truth: [`VARDA_PORT.md`](https://github.com/BlueJayLouche/rustjay-engine/blob/main/VARDA_PORT.md) and the [Varda README](https://github.com/im-knots/varda).
 
 Legend: `todo` → `in-progress` → `done`. Experimental items are flagged; they do not block 100% parity.
 

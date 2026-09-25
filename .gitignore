@@ -1,0 +1,10 @@
+/target
+**/tests/snapshots/*.new.png
+**/tests/snapshots/*.diff.png
+# Shaders dropped into shaders/ stay local unless deliberately added
+# (git add -f), so third-party shaders aren't redistributed by accident.
+shaders/*.fs
+# Runtime state the app writes into the working directory.
+/keymap.json
+/scene.json
+/stage.json
