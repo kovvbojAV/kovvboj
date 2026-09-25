@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+  pull_request:
+    paths-ignore:
+      - "**/*.md"
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust-linux:
+    name: Rust (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      # NDI is opt-in (proprietary SDK), so CI builds without it. These cover
+      # alsa (cpal) and the v4l/udev webcam path (nokhwa); mesa-vulkan-drivers
+      # gives wgpu a software (lavapipe) adapter for the kittest snapshots.
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libudev-dev pkg-config clang ninja-build mesa-vulkan-drivers libvulkan1
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      # Default features (no projection) — the build most contributors run.
+      - run: cargo clippy --locked --all-targets -- -D warnings
+      # The Stage/projector kittest suites need `projection`.
+      - run: cargo clippy --locked --all-targets --features projection -- -D warnings
+      - run: cargo test --locked --features projection
+      # egui_kittest writes the actual render and a diff next to the committed
+      # baseline; upload them so a snapshot failure can be seen (or taken, when
+      # a baseline legitimately changes).
+      - name: Upload snapshot renders
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-renders
+          path: |
+            tests/snapshots/*.new.png
+            tests/snapshots/*.diff.png
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Security audit
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit
+
+  rust-windows:
+    name: Rust (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+      - run: cargo check --locked --all-targets --features projection
