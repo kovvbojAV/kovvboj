@@ -21,6 +21,10 @@ The fastest way to wire things up is with the two map modes at the right of the
 top bar: **MOD** and **MIDI**. Switch one on, and every control you can map
 gets an outline.
 
+A third button beside them, **OSC**, outlines the same controls but copies a
+control's OSC address when you click it. See
+[Control → OSC](control.md#copying-an-address).
+
 ### MOD: LFOs and audio
 
 ![MOD map mode: mappable controls outlined in pink, and the Modulate Master Dim popup listing New LFO, the eight audio bands, and an existing LFO.](img/mod-map.png)

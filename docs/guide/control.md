@@ -28,7 +28,19 @@ parameter addresses. Addresses take the form:
 /rustjay/<category>/<parameter>   <float>
 ```
 
-Send a float in the parameter's range.
+Send a float from 0 to 1. KOVVBOJ scales it onto the parameter's range.
+
+### Copying an address
+
+The quickest way to get an address is **OSC map mode**. Click the **OSC**
+button beside **MIDI** and **MOD** in the top bar (not the OSC status pill),
+and every control you can map is outlined in blue. Hover over a
+control to see its address, and click it to copy the address to the clipboard.
+The outline turns green to show which one you copied. Paste it into whatever is
+sending the OSC, then click **OSC** again to leave the mode.
+
+Layers and effects you add while KOVVBOJ is running can be addressed straight
+away.
 
 ### Text layers
 

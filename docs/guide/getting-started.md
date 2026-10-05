@@ -53,8 +53,8 @@ before it switches workspace.
 
 **Top bar.** On the left are the menus: File, Edit, View, Library, and Help.
 On the right are the frame rate and tempo, followed by status pills for the
-web server (**WEB**) and **OSC**, then **REC**, and then the two map modes,
-**MOD** and **MIDI**. See [Modulation](modulation.md).
+web server (**WEB**) and **OSC**, then **REC**, and then the map modes,
+**MIDI**, **MOD** and **OSC**. See [Modulation](modulation.md).
 
 **Library (left).** This is everything you can play, sorted into groups:
 
