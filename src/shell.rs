@@ -1130,10 +1130,10 @@ impl KovvbojShell {
                         // Map modes. These live only on the built-in host's top
                         // bar, which this shell replaces — without them there is
                         // no way into either mode here at all.
-                        let (mod_map, midi_map) = engine
+                        let (mod_map, midi_map, osc_map) = engine
                             .lock()
-                            .map(|e| (e.lfo_assign_mode, e.midi_learn_mode))
-                            .unwrap_or((false, false));
+                            .map(|e| (e.lfo_assign_mode, e.midi_learn_mode, e.osc_copy_mode))
+                            .unwrap_or((false, false, false));
                         // A button rather than a `selectable_label`: selection
                         // fills with the accent colour, and the state colour then
                         // sits on top of it unreadably.
@@ -1151,6 +1151,7 @@ impl KovvbojShell {
                             e.midi_learn_mode = !e.midi_learn_mode;
                             if e.midi_learn_mode {
                                 e.lfo_assign_mode = false;
+                                e.osc_copy_mode = false;
                             } else {
                                 e.midi_command = rustjay_core::MidiCommand::CancelLearn;
                             }
@@ -1169,6 +1170,28 @@ impl KovvbojShell {
                             e.lfo_assign_mode = !e.lfo_assign_mode;
                             if e.lfo_assign_mode {
                                 e.midi_learn_mode = false;
+                                e.osc_copy_mode = false;
+                            }
+                        }
+                        if ui
+                            .button(
+                                egui::RichText::new("OSC")
+                                    .monospace()
+                                    .size(11.0)
+                                    .color(if osc_map { amber() } else { ink_3() }),
+                            )
+                            .on_hover_text("Click a parameter to copy its OSC address")
+                            .clicked()
+                            && let Ok(mut e) = engine.lock()
+                        {
+                            e.osc_copy_mode = !e.osc_copy_mode;
+                            e.osc_copied_param = None;
+                            if e.osc_copy_mode {
+                                e.lfo_assign_mode = false;
+                                if e.midi_learn_mode {
+                                    e.midi_learn_mode = false;
+                                    e.midi_command = rustjay_core::MidiCommand::CancelLearn;
+                                }
                             }
                         }
 
