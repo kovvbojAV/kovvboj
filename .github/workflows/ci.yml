@@ -22,8 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      # NDI is opt-in (proprietary SDK), so CI builds without it. These cover
-      # alsa (cpal) and the v4l/udev webcam path (nokhwa); mesa-vulkan-drivers
+      # These cover alsa (cpal) and the v4l/udev webcam path (nokhwa); mesa-vulkan-drivers
       # gives wgpu a software (lavapipe) adapter for the kittest snapshots.
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libudev-dev pkg-config clang ninja-build mesa-vulkan-drivers libvulkan1
@@ -35,8 +34,9 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       # Default features (no projection) — the build most contributors run.
       - run: cargo clippy --locked --all-targets -- -D warnings
-      # The Stage/projector kittest suites need `projection`.
-      - run: cargo clippy --locked --all-targets --features projection -- -D warnings
+      # The Stage/projector kittest suites need `projection`. NDI builds without
+      # its SDK since engine 0.2 (grafton-ndi 3 loads the runtime at run time).
+      - run: cargo clippy --locked --all-targets --features projection,ndi -- -D warnings
       - run: cargo test --locked --features projection --lib --bins
       # ui_kittest one test at a time: since egui 0.37, parallel snapshot renders
       # segfault lavapipe (Mesa's software Vulkan) — serial runs are clean.

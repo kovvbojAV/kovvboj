@@ -388,7 +388,9 @@ impl LaserTab {
 /// Luma from a BGRA webcam frame, for blob detection.
 #[cfg(all(feature = "laser-dac", feature = "webcam"))]
 fn bgra_to_luma(bgra: &[u8]) -> Vec<u8> {
-    bgra.chunks_exact(4)
+    bgra.as_chunks::<4>()
+        .0
+        .iter()
         .map(|p| {
             // Rec. 601, the same weighting `rustjay-ledmap` calibrates against.
             ((p[2] as f32 * 0.299) + (p[1] as f32 * 0.587) + (p[0] as f32 * 0.114)) as u8
