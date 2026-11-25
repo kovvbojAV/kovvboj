@@ -52,8 +52,11 @@ and set `FFMPEG_DIR` to its root.
 
 ### NDI
 
-The `ndi` feature needs the [NDI SDK](https://ndi.video/for-developers/ndi-sdk/)
-installed. Set `NDI_SDK_DIR` if the SDK isn't in its default location.
+The `ndi` feature builds without anything NDI-specific. To *run* it you need the
+NDI 6 runtime, from [NDI Tools](https://ndi.video/tools/) or the
+[NDI SDK](https://ndi.video/for-developers/ndi-sdk/). KOVVBOJ looks next to its
+executable first, then in `NDI_RUNTIME_DIR_V6`, then on the library search path
+(which `build.rs` points at the SDK's `lib/macOS` on a Mac).
 
 ## Cargo features
 
@@ -61,7 +64,7 @@ installed. Set `NDI_SDK_DIR` if the SDK isn't in its default location.
 |---|---|
 | *(default)* | `mixer`, `egui`, `webcam`, `led` |
 | `projection` | The Stage and projector outputs (projection mapping, edge blend) |
-| `ndi` | NDI in and out (needs the NDI SDK) |
+| `ndi` | NDI in and out (needs the NDI 6 runtime to run) |
 | `ffmpeg` | Video files and streams through FFmpeg |
 | `hap` | GPU-native HAP playback and encoding |
 | `api` | The web parameter server |

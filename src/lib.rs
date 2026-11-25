@@ -3219,14 +3219,14 @@ impl EffectPlugin for KovvbojRootPlugin {
         // building it clones every library entry into a JSON tree — a thousand
         // strings a frame on the render thread for a 360-shader library.
         #[cfg(all(feature = "mixer", feature = "api"))]
-        if engine.web_enabled {
-            if let Ok(mixer) = self.mixer.lock() {
-                let snapshot = build_kovvboj_snapshot(&mixer, &state.registry, engine);
-                if let Ok(mut guard) = engine.app_state.lock() {
-                    match serde_json::to_value(&snapshot) {
-                        Ok(val) => *guard = Some(val),
-                        Err(e) => log::warn!("[API] snapshot serialization failed: {}", e),
-                    }
+        if engine.web_enabled
+            && let Ok(mixer) = self.mixer.lock()
+        {
+            let snapshot = build_kovvboj_snapshot(&mixer, &state.registry, engine);
+            if let Ok(mut guard) = engine.app_state.lock() {
+                match serde_json::to_value(&snapshot) {
+                    Ok(val) => *guard = Some(val),
+                    Err(e) => log::warn!("[API] snapshot serialization failed: {}", e),
                 }
             }
         }

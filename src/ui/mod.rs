@@ -6048,10 +6048,10 @@ mod egui_impl {
         for (i, label) in ["TL", "TR", "BR", "BL"].iter().enumerate() {
             ui.horizontal(|ui| {
                 ui.label(*label);
-                for axis in 0..2 {
+                for coord in &mut state.stage.laser_field[i] {
                     if ui
                         .add(
-                            egui::DragValue::new(&mut state.stage.laser_field[i][axis])
+                            egui::DragValue::new(coord)
                                 .speed(0.005)
                                 .range(-1.0..=1.0)
                                 .fixed_decimals(3),
