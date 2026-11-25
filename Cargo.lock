@@ -3075,7 +3075,7 @@ dependencies = [
 [[package]]
 name = "nokhwa-bindings-macos"
 version = "0.2.4"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "block2 0.6.2",
  "core-foundation 0.10.1",
@@ -4440,7 +4440,7 @@ dependencies = [
 [[package]]
 name = "rustjay-api"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "anyhow",
  "axum",
@@ -4460,7 +4460,7 @@ dependencies = [
 [[package]]
 name = "rustjay-audio"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "anyhow",
  "cpal",
@@ -4474,7 +4474,7 @@ dependencies = [
 [[package]]
 name = "rustjay-control"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "anyhow",
  "axum",
@@ -4491,7 +4491,7 @@ dependencies = [
 [[package]]
 name = "rustjay-core"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "bytemuck",
  "log",
@@ -4504,7 +4504,7 @@ dependencies = [
 [[package]]
 name = "rustjay-engine"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "anyhow",
  "bytemuck",
@@ -4536,7 +4536,7 @@ dependencies = [
 [[package]]
 name = "rustjay-gui"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "anyhow",
  "bytemuck",
@@ -4561,7 +4561,7 @@ dependencies = [
 [[package]]
 name = "rustjay-imgui-wgpu"
 version = "0.28.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "bytemuck",
  "imgui",
@@ -4573,7 +4573,7 @@ dependencies = [
 [[package]]
 name = "rustjay-io"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "anyhow",
  "bytemuck",
@@ -4604,7 +4604,7 @@ dependencies = [
 [[package]]
 name = "rustjay-isf"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "anyhow",
  "bytemuck",
@@ -4622,7 +4622,7 @@ dependencies = [
 [[package]]
 name = "rustjay-laser"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "anyhow",
  "laser-dac",
@@ -4635,7 +4635,7 @@ dependencies = [
 [[package]]
 name = "rustjay-ledmap"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "anyhow",
  "log",
@@ -4647,7 +4647,7 @@ dependencies = [
 [[package]]
 name = "rustjay-lighting"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "crossbeam",
  "flate2",
@@ -4659,7 +4659,7 @@ dependencies = [
 [[package]]
 name = "rustjay-mixer"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "bytemuck",
  "log",
@@ -4675,7 +4675,7 @@ dependencies = [
 [[package]]
 name = "rustjay-presets"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "anyhow",
  "dirs",
@@ -4701,7 +4701,7 @@ dependencies = [
 [[package]]
 name = "rustjay-projection"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "anyhow",
  "bytemuck",
@@ -4721,7 +4721,7 @@ dependencies = [
 [[package]]
 name = "rustjay-render"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "anyhow",
  "bytemuck",
@@ -4739,7 +4739,7 @@ dependencies = [
 [[package]]
 name = "rustjay-sync"
 version = "0.1.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "log",
  "rustjay-core",
@@ -6268,7 +6268,7 @@ dependencies = [
 [[package]]
 name = "wgpu-hal"
 version = "30.0.0"
-source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=4cc2d7fc000f883e5a900e494286feabd5c64083#4cc2d7fc000f883e5a900e494286feabd5c64083"
+source = "git+https://github.com/BlueJayLouche/rustjay-engine?rev=8551a808f7534adf9f7c69c9985e63a83d41bbbe#8551a808f7534adf9f7c69c9985e63a83d41bbbe"
 dependencies = [
  "android_system_properties",
  "arrayvec",
