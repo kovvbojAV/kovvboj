@@ -139,7 +139,7 @@ pub fn classify(src: &str) -> Kind {
         let has_image = isf.inputs.iter().any(|i| {
             matches!(
                 i.ty,
-                isf::InputType::Image | isf::InputType::Audio(_) | isf::InputType::AudioFft(_)
+                rustjay_isf::isf::InputType::Image | rustjay_isf::isf::InputType::Audio(_) | rustjay_isf::isf::InputType::AudioFft(_)
             )
         });
         if has_image {

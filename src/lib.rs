@@ -108,13 +108,13 @@ pub fn is_transition(src: &str) -> bool {
     let images = header
         .inputs
         .iter()
-        .filter(|i| matches!(i.ty, isf::InputType::Image))
+        .filter(|i| matches!(i.ty, rustjay_isf::isf::InputType::Image))
         .count();
     images == 2
         && header
             .inputs
             .iter()
-            .any(|i| i.name == "progress" && matches!(i.ty, isf::InputType::Float(_)))
+            .any(|i| i.name == "progress" && matches!(i.ty, rustjay_isf::isf::InputType::Float(_)))
 }
 
 /// A transition's name as the picker shows it: the file name, less the

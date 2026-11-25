@@ -996,7 +996,7 @@ mod egui_impl {
         parsed
             .inputs
             .iter()
-            .any(|i| i.name == "inputImage" && matches!(i.ty, isf::InputType::Image))
+            .any(|i| i.name == "inputImage" && matches!(i.ty, rustjay_isf::isf::InputType::Image))
     }
 
     /// One node in a signal strip: a source or an FX slot.
@@ -5187,6 +5187,37 @@ mod egui_impl {
                                         }
                                     }
                                 }
+                                // ponytail: bezier warps (e.g. loaded from a varda project) are
+                                // shown read-only as their tessellated grid. Editing them needs
+                                // the engine's cage editor (rustjay-engine #287) ported here.
+                                Some(rustjay_projection::WarpMode::Bezier(bezier)) => {
+                                    let mesh = bezier.tessellate();
+                                    let (cols, rows) = (mesh.cols as usize, mesh.rows as usize);
+                                    let to_canvas = |p: [f32; 2]| {
+                                        Pos2::new(
+                                            canvas_rect.min.x + p[0] * canvas_rect.width(),
+                                            canvas_rect.min.y + p[1] * canvas_rect.height(),
+                                        )
+                                    };
+                                    let stroke = Stroke::new(
+                                        1.0_f32,
+                                        Color32::from_rgba_unmultiplied(200, 200, 200, 100),
+                                    );
+                                    let at = |r: usize, c: usize| {
+                                        mesh.points.get(r * cols + c).map(|p| to_canvas(p.position))
+                                    };
+                                    for r in 0..rows {
+                                        for c in 0..cols {
+                                            let Some(p) = at(r, c) else { continue };
+                                            for q in [at(r, c + 1).filter(|_| c + 1 < cols), at(r + 1, c)]
+                                                .into_iter()
+                                                .flatten()
+                                            {
+                                                painter.line_segment([p, q], stroke);
+                                            }
+                                        }
+                                    }
+                                }
                                 Some(rustjay_projection::WarpMode::Mesh(mesh)) => {
                                     let cols = mesh.cols as usize;
                                     let rows = mesh.rows as usize;
@@ -7071,6 +7102,7 @@ mod egui_impl {
                 let warp_label = match &surf.warp {
                     rustjay_projection::WarpMode::CornerPin { .. } => "Corner Pin",
                     rustjay_projection::WarpMode::Mesh(_) => "Mesh",
+                    rustjay_projection::WarpMode::Bezier(_) => "Bezier",
                 };
                 egui::ComboBox::from_id_salt("geo_warp_mode")
                     .selected_text(warp_label)
