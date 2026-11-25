@@ -74,8 +74,8 @@ Releases are built with `--all-features`.
 ## Working on the engine at the same time
 
 Every rustjay-engine crate is pinned to one engine `rev` in `Cargo.toml`, and
-that includes the engine's vendored `wgpu-hal`, `nokhwa-bindings-macos`, and
-`imgui-wgpu` under `[patch.crates-io]`. To make an engine change:
+that includes the engine's vendored `wgpu-hal` and `nokhwa-bindings-macos`
+under `[patch.crates-io]`. To make an engine change:
 
 1. Uncomment the `[patch."https://github.com/BlueJayLouche/rustjay-engine"]`
    block in `Cargo.toml`. It points every engine crate at `../rustjay-engine`.

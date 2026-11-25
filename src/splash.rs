@@ -93,7 +93,7 @@ pub fn splash(ui: &mut egui::Ui, elapsed: f32, presentation: Presentation) -> bo
                 .selectable(false),
         );
         art.widget_info(|| {
-            egui::WidgetInfo::labeled(egui::WidgetType::Label, ui.is_enabled(), "KOVVBOJ")
+            egui::WidgetInfo::labeled(egui::Role::Label, ui.is_enabled(), "KOVVBOJ")
         });
         ui.add_space(10.0);
         ui.label(

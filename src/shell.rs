@@ -229,7 +229,7 @@ impl KovvbojShell {
         }
         self.initialised = true;
 
-        let mut fonts = egui::FontDefinitions::default();
+        let mut fonts = rustjay_gui::egui_theme::font_definitions();
         fonts.font_data.insert(
             WORKBENCH.to_owned(),
             std::sync::Arc::new(egui::FontData::from_static(include_bytes!(
@@ -288,7 +288,7 @@ impl KovvbojShell {
                 egui::pos2(panel.left() + GRIP, panel.bottom()),
             ),
         };
-        let resp = ui.interact(handle, ui.id().with(id), egui::Sense::drag());
+        let resp = ui.interact(handle, ui.scope_id().with(id), egui::Sense::drag());
         if resp.hovered() || resp.dragged() {
             ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeHorizontal);
             ui.painter()
@@ -627,7 +627,10 @@ impl AnyEguiShell for KovvbojShell {
                                 });
                         }
 
-                        let mut decks = if decked {
+                        // Hovering a list's top/bottom edge during any drag scrolls it,
+                        // so off-screen layers stay reachable as drop targets.
+                        let dragging = egui::DragAndDrop::has_any_payload(ui.ctx());
+                        if decked {
                             // Two stacks, A left and B right, each scrolling on
                             // its own so a long deck does not drag the other.
                             let full = ui.available_rect_before_wrap();
@@ -648,37 +651,27 @@ impl AnyEguiShell for KovvbojShell {
                                 self.deck_heading(ui, "DECK A", app_state, 0);
                                 egui::ScrollArea::both()
                                     .id_salt("deck_a_scroll")
-                                    .show(ui, |ui| tab(&mut self.deck_a, ui, app_state, &engine));
+                                    .show(ui, |ui| {
+                                        tab(&mut self.deck_a, ui, app_state, &engine);
+                                        crate::ui::drag_edge_scroll(ui, dragging, true);
+                                    });
                             });
                             ui.scope_builder(egui::UiBuilder::new().max_rect(right), |ui| {
                                 self.deck_heading(ui, "DECK B", app_state, 1);
                                 egui::ScrollArea::both()
                                     .id_salt("deck_b_scroll")
-                                    .show(ui, |ui| tab(&mut self.deck_b, ui, app_state, &engine))
-                            })
-                            .inner
+                                    .show(ui, |ui| {
+                                        tab(&mut self.deck_b, ui, app_state, &engine);
+                                        crate::ui::drag_edge_scroll(ui, dragging, true);
+                                    });
+                            });
                         } else {
                             egui::ScrollArea::vertical()
                                 .id_salt("decks_scroll")
-                                .show(ui, |ui| tab(&mut self.decks, ui, app_state, &engine))
-                        };
-                        // While a chip or layer drag is in flight, hovering the
-                        // top/bottom edge scrolls the list, so off-screen layers
-                        // stay reachable as drop targets.
-                        if egui::DragAndDrop::has_any_payload(ui.ctx())
-                            && let Some(pos) = ui.ctx().pointer_interact_pos()
-                            && decks.inner_rect.contains(pos)
-                        {
-                            let delta = crate::ui::drag_edge_scroll_delta(
-                                pos.y,
-                                decks.inner_rect.top(),
-                                decks.inner_rect.bottom(),
-                            );
-                            if delta != 0.0 {
-                                decks.state.offset.y += delta;
-                                decks.state.store(ui.ctx(), decks.id);
-                                ui.ctx().request_repaint();
-                            }
+                                .show(ui, |ui| {
+                                    tab(&mut self.decks, ui, app_state, &engine);
+                                    crate::ui::drag_edge_scroll(ui, dragging, true);
+                                });
                         }
                     }
                     Mode::Stage => {
@@ -714,7 +707,7 @@ impl KovvbojShell {
         if let Some((elapsed, remaining)) = self.launch_timing(now) {
             let opacity = launch_opacity(remaining);
             ctx.request_repaint_after(remaining.min(crate::splash::FRAME_INTERVAL));
-            egui::Modal::new(egui::Id::new("kovvboj_splash"))
+            egui::Modal::new(egui::Id::unique("kovvboj_splash"))
                 .backdrop_color(
                     Presentation::Launch
                         .backdrop()
@@ -733,7 +726,7 @@ impl KovvbojShell {
             }
         } else if let Some(opened_at) = self.about_opened_at {
             ctx.request_repaint_after(crate::splash::FRAME_INTERVAL);
-            let card = egui::Modal::new(egui::Id::new("kovvboj_splash"))
+            let card = egui::Modal::new(egui::Id::unique("kovvboj_splash"))
                 .backdrop_color(Presentation::About.backdrop())
                 .frame(Presentation::About.frame(&ctx.style_of(ctx.theme())))
                 .show(ctx, |ui| {
@@ -1680,15 +1673,14 @@ impl KovvbojShell {
                 } else {
                     rustjay_gui::egui_theme::colors::ink_4()
                 };
-                if ui
+                let transition_label = ui
                     .add(
                         egui::Label::new(egui::RichText::new("transition").size(10.0).color(ink))
                             .sense(egui::Sense::click()),
                     )
                     .on_hover_cursor(egui::CursorIcon::PointingHand)
-                    .on_hover_text("Edit the transition's settings")
-                    .clicked()
-                {
+                    .on_hover_text("Edit the transition's settings");
+                if transition_label.clicked() {
                     edit_transition = true;
                 }
                 egui::ComboBox::from_id_salt("transition_pick")
@@ -1718,7 +1710,9 @@ impl KovvbojShell {
                                 pick = Some(path.clone());
                             }
                         }
-                    });
+                    })
+                    .response
+                    .labelled_by(transition_label.id);
 
                 // Right-to-left, so TAKE sits under B.
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -2165,6 +2159,7 @@ mod crossfader_tests {
             let strip = Arc::new(Mutex::new(egui::Rect::NOTHING));
             let seen = strip.clone();
             let mut harness = egui_kittest::Harness::builder()
+                .with_context_setup(rustjay_gui::egui_theme::install_fonts)
                 .with_size([width, 160.0])
                 .build_ui(move |ui| {
                     *seen.lock().unwrap() = ui.available_rect_before_wrap();

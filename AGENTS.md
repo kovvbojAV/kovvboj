@@ -43,8 +43,8 @@ on 2026-09-25 (engine issue #281).
   `[patch."https://github.com/BlueJayLouche/rustjay-engine"]` block for local
   work against `../rustjay-engine`. Once the engine change merges, bump every
   `rev` to that commit. See CONTRIBUTING.md.
-- `[patch.crates-io]` re-applies the engine's vendored `wgpu-hal`,
-  `nokhwa-bindings-macos`, and `imgui-wgpu`. Cargo ignores a dependency's own
+- `[patch.crates-io]` re-applies the engine's vendored `wgpu-hal` and
+  `nokhwa-bindings-macos`. Cargo ignores a dependency's own
   patches, so if you drop these the build silently uses the unpatched crates.
   Check with `cargo tree -i wgpu-hal`: it must show the engine git source.
 - Bundled shaders need a row in `shaders/CREDITS.md`, and `shaders/*.fs` is

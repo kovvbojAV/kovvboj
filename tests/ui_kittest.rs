@@ -33,6 +33,7 @@ fn tab_harness_with_app<T: AnyEguiTab + 'static>(
     assert!(engine.show_stage_preview);
 
     let mut harness = Harness::builder()
+        .with_context_setup(rustjay_gui::egui_theme::install_fonts)
         .with_size(size)
         .with_pixels_per_point(1.0)
         .with_theme(egui::Theme::Dark)
@@ -198,6 +199,7 @@ fn chip_drag_at_the_edge_scrolls_the_layer_list() {
     let mut shell = kovvboj::shell::KovvbojShell::new();
 
     let mut harness = Harness::builder()
+        .with_context_setup(rustjay_gui::egui_theme::install_fonts)
         .with_size([900.0, 600.0])
         .with_pixels_per_point(1.0)
         .with_theme(egui::Theme::Dark)
@@ -216,7 +218,10 @@ fn chip_drag_at_the_edge_scrolls_the_layer_list() {
     harness.drop_at(egui::pos2(450.0, 300.0));
     harness.run_steps(4);
 
-    let before = harness.get_by_label("Layer 0").rect();
+    // Measure the first row ("Layer 14", top of the list): during a drag, drop gaps
+    // open between rows, so a lower row is also pushed down by every gap above it
+    // and can end up lower even while the list scrolls up.
+    let before = harness.get_by_label("Layer 14").rect();
 
     // The list's bottom edge sits just above the MASTER panel; hover a few
     // points above it, inside the scroll margin. ("MASTER" labels more than
@@ -232,7 +237,7 @@ fn chip_drag_at_the_edge_scrolls_the_layer_list() {
     harness.hover_at(egui::pos2(c.x, master_top - 8.0));
     harness.run_steps(8);
 
-    let after = harness.get_by_label("Layer 0").rect();
+    let after = harness.get_by_label("Layer 14").rect();
     assert!(
         after.min.y < before.min.y,
         "dragging to the bottom edge should scroll the list (before={before:?}, after={after:?})"
@@ -464,6 +469,7 @@ fn outputs_projector_row_fits_a_640pt_window() {
 fn the_splash_grows_credits_only_when_invoked() {
     fn harness_for(presentation: kovvboj::splash::Presentation) -> Harness<'static> {
         let mut harness = Harness::builder()
+            .with_context_setup(rustjay_gui::egui_theme::install_fonts)
             .with_size([720.0, 400.0])
             .with_theme(egui::Theme::Dark)
             .build_ui(move |ui| {
@@ -520,6 +526,7 @@ fn plus_on_a_generator_row_queues_a_layer() {
     let mut engine = EngineState::default();
     let mut tab = EffectsTab::default();
     let mut harness = Harness::builder()
+        .with_context_setup(rustjay_gui::egui_theme::install_fonts)
         .with_size([700.0, 800.0])
         .with_pixels_per_point(1.0)
         .with_theme(egui::Theme::Dark)

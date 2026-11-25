@@ -108,13 +108,13 @@ pub fn is_transition(src: &str) -> bool {
     let images = header
         .inputs
         .iter()
-        .filter(|i| matches!(i.ty, isf::InputType::Image))
+        .filter(|i| matches!(i.ty, rustjay_isf::isf::InputType::Image))
         .count();
     images == 2
         && header
             .inputs
             .iter()
-            .any(|i| i.name == "progress" && matches!(i.ty, isf::InputType::Float(_)))
+            .any(|i| i.name == "progress" && matches!(i.ty, rustjay_isf::isf::InputType::Float(_)))
 }
 
 /// A transition's name as the picker shows it: the file name, less the
@@ -550,7 +550,8 @@ pub struct KovvbojAppState {
     /// Sysinfo state for CPU/memory readout (sysmon feature only).
     #[serde(skip)]
     #[cfg(feature = "sysmon")]
-    pub sys: sysinfo::System,
+    /// `None` if sysinfo couldn't start (0.40 made that fallible); the readout stays blank.
+    pub sys: Option<sysinfo::System>,
     /// Frame counter for throttling sysinfo refresh.
     #[serde(skip)]
     #[cfg(feature = "sysmon")]
@@ -1210,7 +1211,7 @@ impl Default for KovvbojAppState {
             #[cfg(feature = "mixer")]
             params_dirty_request: false,
             #[cfg(feature = "sysmon")]
-            sys: sysinfo::System::new_all(),
+            sys: sysinfo::System::new_all().ok(),
             #[cfg(feature = "sysmon")]
             sysmon_frame: 0,
         }
@@ -3277,17 +3278,18 @@ impl EffectPlugin for KovvbojRootPlugin {
         #[cfg(feature = "sysmon")]
         {
             state.sysmon_frame = state.sysmon_frame.wrapping_add(1);
-            if state.sysmon_frame % 60 == 0 {
-                state.sys.refresh_memory();
-                state.sys.refresh_cpu_usage();
-                let cpu_avg = if state.sys.cpus().is_empty() {
+            if state.sysmon_frame.is_multiple_of(60)
+                && let Some(sys) = state.sys.as_mut()
+            {
+                sys.refresh_memory();
+                sys.refresh_cpu_usage();
+                let cpu_avg = if sys.cpus().is_empty() {
                     0.0
                 } else {
-                    state.sys.cpus().iter().map(|c| c.cpu_usage()).sum::<f32>()
-                        / state.sys.cpus().len() as f32
+                    sys.cpus().iter().map(|c| c.usage()).sum::<f32>() / sys.cpus().len() as f32
                 };
-                let mem_total = state.sys.total_memory();
-                let mem_used = state.sys.used_memory();
+                let mem_total = sys.total_memory();
+                let mem_used = sys.used_memory();
                 if let Ok(mut perf) = engine.performance.lock() {
                     perf.cpu_percent = cpu_avg.clamp(0.0, 100.0);
                     perf.mem_used_mb = mem_used / 1_048_576;

@@ -302,6 +302,10 @@ pub fn deck_add_buttons(ui: &mut egui::Ui, decked: bool, what: &str) -> Option<O
     picked
 }
 
+/// The layer row's opacity slider never squashes below this.
+#[cfg(all(feature = "mixer", feature = "egui"))]
+const ROW_SLIDER_MIN_W: f32 = 24.0;
+
 #[cfg(all(feature = "mixer", feature = "egui"))]
 pub fn drag_edge_scroll_delta(pos: f32, min: f32, max: f32) -> f32 {
     const EDGE: f32 = 36.0;
@@ -315,6 +319,29 @@ pub fn drag_edge_scroll_delta(pos: f32, min: f32, max: f32) -> f32 {
         MIN_SPEED + (MAX_SPEED - MIN_SPEED) * (1.0 - from_max / EDGE)
     } else {
         0.0
+    }
+}
+
+/// Call at the end of a scroll area's content. While `dragging`, a pointer near
+/// the viewport's edge scrolls that area, so off-screen drop targets stay
+/// reachable. Raised inside the content so this scroll area is the one that
+/// consumes it (egui 0.37 has no public offset setter); the clip rect is the viewport.
+#[cfg(all(feature = "mixer", feature = "egui"))]
+pub fn drag_edge_scroll(ui: &egui::Ui, dragging: bool, vertical: bool) {
+    let view = ui.clip_rect();
+    let Some(pos) = ui.ctx().pointer_interact_pos().filter(|p| dragging && view.contains(*p)) else {
+        return;
+    };
+    let delta = if vertical {
+        drag_edge_scroll_delta(pos.y, view.top(), view.bottom())
+    } else {
+        drag_edge_scroll_delta(pos.x, view.left(), view.right())
+    };
+    if delta != 0.0 {
+        // egui's delta moves the content: the opposite sign of a scroll offset.
+        let d = if vertical { egui::vec2(0.0, -delta) } else { egui::vec2(-delta, 0.0) };
+        ui.scroll_with_delta_animation(d, egui::style::ScrollAnimation::none());
+        ui.ctx().request_repaint();
     }
 }
 
@@ -414,7 +441,9 @@ mod egui_impl {
                         idx = i;
                     }
                 }
-            });
+            })
+            .response
+            .on_hover_text("Blend mode");
         if idx != prev {
             engine.set_param_base(key, idx as f32);
         }
@@ -425,7 +454,7 @@ mod egui_impl {
         let prev = idx;
         let names: Vec<&str> = BlendMode::all().iter().map(|m| m.short_name()).collect();
         ui.horizontal(|ui| {
-            ui.label(label);
+            let label = ui.label(label);
             egui::ComboBox::from_id_salt(key)
                 .width(ui.available_width())
                 .selected_text(*names.get(idx).unwrap_or(&"???"))
@@ -435,7 +464,9 @@ mod egui_impl {
                             idx = i;
                         }
                     }
-                });
+                })
+                .response
+                .labelled_by(label.id);
         });
         if idx != prev {
             engine.set_param_base(key, idx as f32);
@@ -449,7 +480,7 @@ mod egui_impl {
         let prev = idx;
         let names = ["None", "Loop", "PingPong"];
         ui.horizontal(|ui| {
-            ui.label(label);
+            let label = ui.label(label);
             egui::ComboBox::from_id_salt(key)
                 .width(ui.available_width())
                 .selected_text(*names.get(idx).unwrap_or(&"???"))
@@ -459,7 +490,9 @@ mod egui_impl {
                             idx = i;
                         }
                     }
-                });
+                })
+                .response
+                .labelled_by(label.id);
         });
         if idx != prev {
             engine.set_param_base(key, idx as f32);
@@ -996,7 +1029,7 @@ mod egui_impl {
         parsed
             .inputs
             .iter()
-            .any(|i| i.name == "inputImage" && matches!(i.ty, isf::InputType::Image))
+            .any(|i| i.name == "inputImage" && matches!(i.ty, rustjay_isf::isf::InputType::Image))
     }
 
     /// One node in a signal strip: a source or an FX slot.
@@ -1039,7 +1072,7 @@ mod egui_impl {
         // The label is painted as a galley, so without this the chip is an
         // unnamed rectangle to a screen reader — and unfindable from a test.
         resp.widget_info(|| {
-            egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label)
+            egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), label)
         });
         let p = ui.painter();
 
@@ -1209,7 +1242,7 @@ mod egui_impl {
                 chain: chain_ref.clone(),
                 slot: slot.uuid.clone(),
             };
-            let id = ui.id().with(("fxchip", &slot.uuid));
+            let id = ui.scope_id().with(("fxchip", &slot.uuid));
             let selected = selected_fx == Some(slot.uuid.as_str());
             let label = slot.effect.label();
             let dragging = ui.ctx().is_being_dragged(id);
@@ -1807,12 +1840,14 @@ mod egui_impl {
                     if !ui.memory(|m| m.has_focus(id)) && draft != name {
                         draft = name.clone();
                     }
-                    let resp = ui.add(
-                        egui::TextEdit::singleline(&mut draft)
-                            .id(id)
-                            .desired_width(f32::INFINITY)
-                            .font(egui::TextStyle::Monospace),
-                    );
+                    let resp = ui
+                        .add(
+                            egui::TextEdit::singleline(&mut draft)
+                                .id(id)
+                                .desired_width(f32::INFINITY)
+                                .font(egui::TextStyle::Monospace),
+                        )
+                        .on_hover_text("Layer name");
                     ui.data_mut(|d| d.insert_temp(id, draft.clone()));
                     let done = resp.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
                     let trimmed = draft.trim().to_string();
@@ -1915,7 +1950,7 @@ mod egui_impl {
                 .collect();
 
             ui.horizontal(|ui| {
-                ui.label("Source:");
+                let source_label = ui.label("Source:");
                 egui::ComboBox::from_id_salt(("layer_source", &layer))
                     .selected_text(if current.is_empty() { "--" } else { &current })
                     .show_ui(ui, |ui| {
@@ -1930,7 +1965,9 @@ mod egui_impl {
                                 });
                             }
                         }
-                    });
+                    })
+                    .response
+                    .labelled_by(source_label.id);
                 if ui.small_button("⟳").on_hover_text("Rescan").clicked() {
                     state.registry.refresh_builtins();
                 }
@@ -2105,7 +2142,7 @@ mod egui_impl {
             // The group moves as a block: dragging the grip carries the group's
             // id, and the drop restacks every member together.
             ui.dnd_drag_source(
-                ui.id().with(("groupdrag", &uuid)),
+                ui.scope_id().with(("groupdrag", &uuid)),
                 LayerDrag(format!("group:{uuid}")),
                 |ui| {
                     ui.label("≡");
@@ -2482,7 +2519,7 @@ mod egui_impl {
                                         // every frame of the hold and walk the layer down
                                         // the stack.
                                         ui.dnd_drag_source(
-                                            ui.id().with(("layerdrag", uuid)),
+                                            ui.scope_id().with(("layerdrag", uuid)),
                                             LayerDrag(uuid.clone()),
                                             |ui| {
                                                 ui.label("≡");
@@ -2493,15 +2530,19 @@ mod egui_impl {
 
                                         let name = mixer.channels[idx].name.clone();
                                         // The control group on the right (✖, blend,
-                                        // slider at minimum, M, S + gaps) needs about
-                                        // this much room; the name gets what's left and
+                                        // slider at its minimum, K, S, M + gaps) gets
+                                        // its width; the name gets what's left and
                                         // ellipsizes rather than shoving the controls
-                                        // off the panel on narrow widths. The gaps are
-                                        // the 4pt the control layout sets below, not
-                                        // the theme's 8: at a half-window deck column
-                                        // those five gaps were a third of the name.
-                                        let controls_w =
-                                            14.0 + 62.0 + 24.0 + 40.0 + 20.0 + 6.0 * 4.0;
+                                        // off the panel on narrow widths. Measured on
+                                        // the previous frame, minus the slider, plus
+                                        // the slider's minimum: hard-coded widths
+                                        // drifted when egui 0.37 widened every control.
+                                        let controls_id =
+                                            egui::Id::unique(("layer_row_controls_w", uuid));
+                                        let controls_w = ui
+                                            .data(|d| d.get_temp::<f32>(controls_id))
+                                            .unwrap_or(190.0)
+                                            + ROW_SLIDER_MIN_W;
                                         let name_w = (ui.available_width() - controls_w).max(20.0);
                                         let name_rect = egui::Rect::from_min_size(
                                             ui.cursor().min,
@@ -2519,7 +2560,7 @@ mod egui_impl {
                                         let thumb_h = 22.0;
                                         let thumb_size =
                                             egui::vec2(thumb_h * crate::thumbs::ASPECT, thumb_h);
-                                        let slot = ui.id().with("thumb_slot");
+                                        let slot = egui::IdSalt::new("thumb_slot");
                                         // Only where a readable name is left beside
                                         // it: in a half-width deck column the thumb
                                         // ate the whole button and every layer read
@@ -2633,6 +2674,9 @@ mod egui_impl {
                                             egui::Layout::right_to_left(egui::Align::Center),
                                             |ui| {
                                                 ui.spacing_mut().item_spacing.x = 4.0;
+                                                // Same tight padding as the name button: a
+                                                // half-window deck column needs the width.
+                                                ui.spacing_mut().button_padding = egui::vec2(4.0, 1.0);
                                                 if ui
                                                     .add(
                                                         egui::Button::new(
@@ -2665,9 +2709,25 @@ mod egui_impl {
                                                 // through `spacing.slider_width` — a
                                                 // `Slider` always allocates that width
                                                 // and ignores `add_sized`.
-                                                let slider_w = (ui.available_width()
-                                                    - 3.0 * (20.0 + ui.spacing().item_spacing.x))
-                                                    .clamp(24.0, 96.0);
+                                                let button_font =
+                                                    egui::TextStyle::Button.resolve(ui.style());
+                                                let buttons_w: f32 = ["M", "S", "K"]
+                                                    .iter()
+                                                    .map(|t| {
+                                                        ui.painter()
+                                                            .layout_no_wrap(
+                                                                (*t).to_owned(),
+                                                                button_font.clone(),
+                                                                egui::Color32::PLACEHOLDER,
+                                                            )
+                                                            .size()
+                                                            .x
+                                                            + 2.0 * ui.spacing().button_padding.x
+                                                            + ui.spacing().item_spacing.x
+                                                    })
+                                                    .sum();
+                                                let slider_w = (ui.available_width() - buttons_w)
+                                                    .clamp(ROW_SLIDER_MIN_W, 96.0);
                                                 ui.spacing_mut().slider_width = slider_w;
                                                 // Filled up to the value: the bare rail
                                                 // is the row's own colour, so at 1.0
@@ -2719,7 +2779,7 @@ mod egui_impl {
                                                     .get_param_base(&key_key)
                                                     .unwrap_or(0.0)
                                                     .round() as u32;
-                                                let remembered = ui.id().with(("keymode", uuid));
+                                                let remembered = ui.scope_id().with(("keymode", uuid));
                                                 if ui
                                                     .selectable_label(mode != 0, "K")
                                                     .on_hover_text(if mode != 0 {
@@ -2741,12 +2801,14 @@ mod egui_impl {
                                                         layer: uuid.clone(),
                                                     });
                                                 }
+                                                let fixed_w = ui.min_rect().width() - resp.rect.width();
+                                                ui.data_mut(|d| d.insert_temp(controls_id, fixed_w));
                                             },
                                         );
                                     });
 
                                     // ── Row 2: the signal strip ──────────────────────
-                                    let mut strip = strip_scroll(ui, "strip").show(ui, |ui| {
+                                    strip_scroll(ui, "strip").show(ui, |ui| {
                                         ui.horizontal(|ui| {
                                             let entry = state.layer_sources.get(uuid);
                                             let kind = entry
@@ -2763,7 +2825,7 @@ mod egui_impl {
                                             );
                                             let (mut resp, _) = chip(
                                                 ui,
-                                                ui.id().with(("srcchip", uuid)),
+                                                ui.scope_id().with(("srcchip", uuid)),
                                                 &label,
                                                 source_selected,
                                                 None,
@@ -2814,25 +2876,15 @@ mod egui_impl {
                                                 });
                                             }
                                         });
-                                    });
-                                    // While a chip/library drag is in flight, hovering
-                                    // the left/right edge scrolls the strip, so
-                                    // off-screen gaps stay reachable as drop targets.
-                                    if egui::DragAndDrop::has_payload_of_type::<ChainDrag>(ui.ctx())
-                                        && let Some(pos) = ui.ctx().pointer_interact_pos()
-                                        && strip.inner_rect.contains(pos)
-                                    {
-                                        let delta = crate::ui::drag_edge_scroll_delta(
-                                            pos.x,
-                                            strip.inner_rect.left(),
-                                            strip.inner_rect.right(),
+                                        // Hovering the left/right edge during a chip/library
+                                        // drag scrolls the strip, so off-screen gaps stay
+                                        // reachable as drop targets.
+                                        crate::ui::drag_edge_scroll(
+                                            ui,
+                                            egui::DragAndDrop::has_payload_of_type::<ChainDrag>(ui.ctx()),
+                                            false,
                                         );
-                                        if delta != 0.0 {
-                                            strip.state.offset.x += delta;
-                                            strip.state.store(ui.ctx(), strip.id);
-                                            ui.ctx().request_repaint();
-                                        }
-                                    }
+                                    });
                                 });
                             });
                         if nested {
@@ -3453,7 +3505,7 @@ mod egui_impl {
                                             match (is_effect, &entry.path) {
                                                 (true, Some(path)) => {
                                                     ui.dnd_drag_source(
-                                                        ui.id().with(("libfx", &entry.id)),
+                                                        ui.scope_id().with(("libfx", &entry.id)),
                                                         ChainDrag::LibraryIsf {
                                                             path: path.clone(),
                                                         },
@@ -5016,7 +5068,7 @@ mod egui_impl {
                                     positions[i] = pos;
                                     let handle_rect =
                                         Rect::from_center_size(pos, Vec2::splat(18.0));
-                                    let handle_id = ui.id().with(("uv_crop_handle", i));
+                                    let handle_id = ui.scope_id().with(("uv_crop_handle", i));
                                     let handle_response =
                                         ui.interact(handle_rect, handle_id, egui::Sense::drag());
 
@@ -5140,7 +5192,7 @@ mod egui_impl {
                                     for (i, pos) in positions.into_iter().enumerate() {
                                         let handle_response = ui.interact(
                                             Rect::from_center_size(pos, Vec2::splat(10.0)),
-                                            ui.id().with(("corner_pin_handle", i)),
+                                            ui.scope_id().with(("corner_pin_handle", i)),
                                             egui::Sense::drag(),
                                         );
                                         let handle_color = if handle_response.dragged() {
@@ -5184,6 +5236,37 @@ mod egui_impl {
                                             corners[i] =
                                                 canvas_normalized_point(pointer_pos, canvas_rect);
                                             warp_dirty = true;
+                                        }
+                                    }
+                                }
+                                // ponytail: bezier warps (e.g. loaded from a varda project) are
+                                // shown read-only as their tessellated grid. Editing them needs
+                                // the engine's cage editor (rustjay-engine #287) ported here.
+                                Some(rustjay_projection::WarpMode::Bezier(bezier)) => {
+                                    let mesh = bezier.tessellate();
+                                    let (cols, rows) = (mesh.cols as usize, mesh.rows as usize);
+                                    let to_canvas = |p: [f32; 2]| {
+                                        Pos2::new(
+                                            canvas_rect.min.x + p[0] * canvas_rect.width(),
+                                            canvas_rect.min.y + p[1] * canvas_rect.height(),
+                                        )
+                                    };
+                                    let stroke = Stroke::new(
+                                        1.0_f32,
+                                        Color32::from_rgba_unmultiplied(200, 200, 200, 100),
+                                    );
+                                    let at = |r: usize, c: usize| {
+                                        mesh.points.get(r * cols + c).map(|p| to_canvas(p.position))
+                                    };
+                                    for r in 0..rows {
+                                        for c in 0..cols {
+                                            let Some(p) = at(r, c) else { continue };
+                                            for q in [at(r, c + 1).filter(|_| c + 1 < cols), at(r + 1, c)]
+                                                .into_iter()
+                                                .flatten()
+                                            {
+                                                painter.line_segment([p, q], stroke);
+                                            }
                                         }
                                     }
                                 }
@@ -5261,7 +5344,7 @@ mod egui_impl {
                                         );
                                         let handle_rect =
                                             Rect::from_center_size(pos, Vec2::splat(8.0));
-                                        let handle_id = ui.id().with(("mesh_handle", i));
+                                        let handle_id = ui.scope_id().with(("mesh_handle", i));
                                         let handle_response = ui.interact(
                                             handle_rect,
                                             handle_id,
@@ -5332,7 +5415,7 @@ mod egui_impl {
                                     }
                                     let hr = ui.interact(
                                         Rect::from_center_size(pos, Vec2::splat(12.0)),
-                                        ui.id().with(("led_quad_handle", i)),
+                                        ui.scope_id().with(("led_quad_handle", i)),
                                         egui::Sense::drag(),
                                     );
                                     let col = if hr.dragged() {
@@ -5570,7 +5653,7 @@ mod egui_impl {
                                     for (i, pos) in corners.into_iter().enumerate() {
                                         let hr = ui.interact(
                                             Rect::from_center_size(pos, Vec2::splat(12.0)),
-                                            ui.id().with(("laser_quad_handle", i)),
+                                            ui.scope_id().with(("laser_quad_handle", i)),
                                             egui::Sense::drag(),
                                         );
                                         let col = if hr.dragged() {
@@ -5708,7 +5791,7 @@ mod egui_impl {
                                                 pos,
                                                 egui::Vec2::splat(12.0),
                                             );
-                                            let handle_id = ui.id().with((
+                                            let handle_id = ui.scope_id().with((
                                                 "light_region_handle",
                                                 sel_oi,
                                                 sel_si,
@@ -6803,13 +6886,13 @@ mod egui_impl {
                 .surfaces
                 .get_mut(state.stage.selected_surface_index)
             {
-                ui.label("Name:");
-                if ui.text_edit_singleline(&mut surf.name).changed() {
+                let name_label = ui.label("Name:");
+                if ui.text_edit_singleline(&mut surf.name).labelled_by(name_label.id).changed() {
                     geo_dirty = true;
                 }
                 ui.separator();
 
-                ui.label("Source:");
+                let combo_label = ui.label("Source:");
                 let current_label = surf.source.label();
                 let prev_source = surf.source.clone();
                 egui::ComboBox::from_id_salt("geo_source_sel")
@@ -6820,13 +6903,15 @@ mod egui_impl {
                                 surf.source = src.clone();
                             }
                         }
-                    });
+                    })
+                .response
+                .labelled_by(combo_label.id);
                 if surf.source != prev_source {
                     geo_dirty = true;
                 }
                 ui.separator();
 
-                ui.label("Content Mapping:");
+                let combo_label = ui.label("Content Mapping:");
                 let mapping_label = surf.content_mapping.label();
                 egui::ComboBox::from_id_salt("geo_content_mapping")
                     .selected_text(mapping_label)
@@ -6848,7 +6933,9 @@ mod egui_impl {
                             surf.content_mapping = ContentMapping::Mapped;
                             warp_dirty = true;
                         }
-                    });
+                    })
+                .response
+                .labelled_by(combo_label.id);
                 ui.separator();
 
                 // ── Position & size in pixels ───────────────────────────
@@ -7067,10 +7154,11 @@ mod egui_impl {
                     ui.separator();
                 }
 
-                ui.label("Warp Mode:");
+                let combo_label = ui.label("Warp Mode:");
                 let warp_label = match &surf.warp {
                     rustjay_projection::WarpMode::CornerPin { .. } => "Corner Pin",
                     rustjay_projection::WarpMode::Mesh(_) => "Mesh",
+                    rustjay_projection::WarpMode::Bezier(_) => "Bezier",
                 };
                 egui::ComboBox::from_id_salt("geo_warp_mode")
                     .selected_text(warp_label)
@@ -7102,7 +7190,9 @@ mod egui_impl {
                             );
                             warp_dirty = true;
                         }
-                    });
+                    })
+                .response
+                .labelled_by(combo_label.id);
 
                 if let rustjay_projection::WarpMode::CornerPin { corners } = &mut surf.warp {
                     // In pixels of the output the corners actually land on,
@@ -7170,32 +7260,36 @@ mod egui_impl {
                 {
                     let [min_u, min_v, max_u, max_v] = &mut surf.uv_crop_rect;
                     ui.horizontal(|ui| {
-                        ui.label("Min U:");
+                        let l = ui.label("Min U:");
                         if ui
                             .add(egui::DragValue::new(min_u).speed(0.01).range(0.0..=1.0))
+                            .labelled_by(l.id)
                             .changed()
                         {
                             warp_dirty = true;
                         }
-                        ui.label("Min V:");
+                        let l = ui.label("Min V:");
                         if ui
                             .add(egui::DragValue::new(min_v).speed(0.01).range(0.0..=1.0))
+                            .labelled_by(l.id)
                             .changed()
                         {
                             warp_dirty = true;
                         }
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Max U:");
+                        let l = ui.label("Max U:");
                         if ui
                             .add(egui::DragValue::new(max_u).speed(0.01).range(0.0..=1.0))
+                            .labelled_by(l.id)
                             .changed()
                         {
                             warp_dirty = true;
                         }
-                        ui.label("Max V:");
+                        let l = ui.label("Max V:");
                         if ui
                             .add(egui::DragValue::new(max_v).speed(0.01).range(0.0..=1.0))
+                            .labelled_by(l.id)
                             .changed()
                         {
                             warp_dirty = true;
@@ -7368,21 +7462,24 @@ mod egui_impl {
                     ui.push_id(i, |ui| {
                         ui.vertical(|ui| {
                         ui.horizontal(|ui| {
-                            ui.checkbox(&mut proj.enabled, "");
-                            ui.add(egui::TextEdit::singleline(&mut proj.name).desired_width(140.0));
+                            ui.checkbox(&mut proj.enabled, "").on_hover_text("Projector on");
+                            ui.add(egui::TextEdit::singleline(&mut proj.name).desired_width(140.0))
+                                .on_hover_text("Projector name");
                             ui.label("size:");
                             ui.add(
                                 egui::DragValue::new(&mut proj.width)
                                     .speed(10)
                                     .range(1..=8192),
-                            );
+                            )
+                            .on_hover_text("Width (px)");
                             ui.label("×");
                             ui.add(
                                 egui::DragValue::new(&mut proj.height)
                                     .speed(10)
                                     .range(1..=8192),
-                            );
-                            ui.label("monitor:");
+                            )
+                            .on_hover_text("Height (px)");
+                            let monitor_label = ui.label("monitor:");
                             let mut monitor =
                                 proj.fullscreen_monitor.map(|m| m as i32).unwrap_or(-1);
                             if ui
@@ -7398,6 +7495,7 @@ mod egui_impl {
                                             }
                                         }),
                                 )
+                                .labelled_by(monitor_label.id)
                                 .changed()
                             {
                                 proj.fullscreen_monitor = if monitor < 0 {
@@ -7445,7 +7543,7 @@ mod egui_impl {
                                 .on_hover_text(names.join(" + "));
                         });
                         ui.horizontal(|ui| {
-                            ui.label("type:");
+                            let combo_label = ui.label("type:");
                             let prev_type = proj.output_type.clone();
                             egui::ComboBox::from_id_salt(format!("proj_type_{}", i))
                                 .selected_text(proj.output_type.label())
@@ -7484,7 +7582,9 @@ mod egui_impl {
                                         OutputType::V4l2,
                                         "V4L2",
                                     );
-                                });
+                                })
+                            .response
+                            .labelled_by(combo_label.id);
                             #[cfg(target_os = "linux")]
                             if proj.output_type == crate::stage::OutputType::V4l2 {
                                 v4l2_device_picker(
@@ -7516,7 +7616,7 @@ mod egui_impl {
                                 proj.recording = false;
                                 proj_dirty = true;
                             }
-                            ui.label("rotate:");
+                            let combo_label = ui.label("rotate:");
                             let prev_rot = proj.rotation;
                             egui::ComboBox::from_id_salt(format!("proj_rot_{}", i))
                                 .selected_text(proj.rotation.label())
@@ -7542,7 +7642,9 @@ mod egui_impl {
                                         OutputRotation::Deg270,
                                         OutputRotation::Deg270.label(),
                                     );
-                                });
+                                })
+                            .response
+                            .labelled_by(combo_label.id);
                             if proj.rotation != prev_rot {
                                 proj_dirty = true;
                             }
@@ -7709,21 +7811,24 @@ mod egui_impl {
                     ui.push_id(format!("hl_{}", i), |ui| {
                         ui.vertical(|ui| {
                         ui.horizontal(|ui| {
-                            ui.checkbox(&mut hl.enabled, "");
-                            ui.add(egui::TextEdit::singleline(&mut hl.name).desired_width(140.0));
+                            ui.checkbox(&mut hl.enabled, "").on_hover_text("Headless output on");
+                            ui.add(egui::TextEdit::singleline(&mut hl.name).desired_width(140.0))
+                                .on_hover_text("Headless output name");
                             ui.label("size:");
                             ui.add(
                                 egui::DragValue::new(&mut hl.width)
                                     .speed(10)
                                     .range(1..=8192),
-                            );
+                            )
+                            .on_hover_text("Width (px)");
                             ui.label("×");
                             ui.add(
                                 egui::DragValue::new(&mut hl.height)
                                     .speed(10)
                                     .range(1..=8192),
-                            );
-                            ui.label("surface:");
+                            )
+                            .on_hover_text("Height (px)");
+                            let combo_label = ui.label("surface:");
                             egui::ComboBox::from_id_salt(format!("hl_surf_{}", i))
                                 .selected_text(
                                     hl.surface_index
@@ -7751,10 +7856,12 @@ mod egui_impl {
                                             hl_dirty = true;
                                         }
                                     }
-                                });
+                                })
+                            .response
+                            .labelled_by(combo_label.id);
                         });
                         ui.horizontal(|ui| {
-                            ui.label("type:");
+                            let combo_label = ui.label("type:");
                             let prev_type = hl.output_type.clone();
                             egui::ComboBox::from_id_salt(format!("hl_type_{}", i))
                                 .selected_text(hl.output_type.label())
@@ -7793,7 +7900,9 @@ mod egui_impl {
                                         OutputType::V4l2,
                                         "V4L2",
                                     );
-                                });
+                                })
+                            .response
+                            .labelled_by(combo_label.id);
                             #[cfg(target_os = "linux")]
                             if hl.output_type == crate::stage::OutputType::V4l2 {
                                 v4l2_device_picker(ui, ("hl_v4l2", i), &mut hl.v4l2_device, 20 + i);
@@ -8100,6 +8209,7 @@ mod egui_impl {
 
             let mut engine = EngineState::new();
             let mut harness = egui_kittest::Harness::builder()
+                .with_context_setup(rustjay_gui::egui_theme::install_fonts)
                 .with_size([420.0, 320.0])
                 .build_ui(move |ui| {
                     draw_inspector(ui, &mut app, &mut engine);
@@ -8200,9 +8310,10 @@ mod egui_impl {
             let seen = clicked.clone();
 
             let mut harness = egui_kittest::Harness::builder()
+                .with_context_setup(rustjay_gui::egui_theme::install_fonts)
                 .with_size([200.0, 60.0])
                 .build_ui(move |ui| {
-                    let id = ui.id().with("test-chip");
+                    let id = ui.scope_id().with("test-chip");
                     let (resp, _) = chip(ui, id, "Kaleido", false, Some(true));
                     if resp.clicked() {
                         seen.store(true, Ordering::SeqCst);
@@ -8260,6 +8371,7 @@ mod egui_impl {
             let seen = Arc::new(Mutex::new((egui::Rect::NOTHING, egui::Rect::NOTHING)));
             let out = seen.clone();
             let mut harness = egui_kittest::Harness::builder()
+                .with_context_setup(rustjay_gui::egui_theme::install_fonts)
                 .with_size([COLUMN * 2.0, 200.0])
                 .build_ui(move |ui| {
                     let mut column = ui.available_rect_before_wrap();
