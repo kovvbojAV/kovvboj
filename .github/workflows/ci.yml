@@ -37,7 +37,10 @@ jobs:
       - run: cargo clippy --locked --all-targets -- -D warnings
       # The Stage/projector kittest suites need `projection`.
       - run: cargo clippy --locked --all-targets --features projection -- -D warnings
-      - run: cargo test --locked --features projection
+      - run: cargo test --locked --features projection --lib --bins
+      # ui_kittest one test at a time, so a crash in the renderer (lavapipe)
+      # names the test it happened in.
+      - run: cargo test --locked --features projection --test ui_kittest -- --test-threads=1
       # egui_kittest writes the actual render and a diff next to the committed
       # baseline; upload them so a snapshot failure can be seen (or taken, when
       # a baseline legitimately changes).
